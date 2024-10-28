@@ -12,7 +12,37 @@ function Square.new(x, y)
 	self.directionChangeTime = 2 -- Change direction every 2 seconds
 	self.turnSpeed = math.pi * 2 -- How fast it can turn (full rotation per second)
 
+	-- New reproduction properties
+	self.reproductionEnergyCost = 50
+	self.reproductionEnergyThreshold = 150 -- Only reproduce when energy > this
+	self.mutationRange = 0.1 -- 10% variation in offspring properties
+
 	return setmetatable(self, Square)
+end
+
+function Square:reproduce()
+	-- Only reproduce if we have enough energy
+	if self.energy < self.reproductionEnergyThreshold then
+		return
+	end
+
+	-- Create offspring with slightly mutated properties
+	local offspring = Square.new(self.x, self.y)
+
+	-- Mutate offspring properties
+	offspring.speed = self.speed * (1 + (love.math.random() - 0.5) * self.mutationRange)
+	offspring.size = self.size * (1 + (love.math.random() - 0.5) * self.mutationRange)
+
+	-- Cost energy to reproduce
+	self.energy = self.energy - self.reproductionEnergyCost
+	offspring.energy = self.reproductionEnergyCost -- Give energy to offspring
+
+	-- Push offspring slightly away in random direction
+	local pushAngle = love.math.random() * math.pi * 2
+	offspring.x = offspring.x + math.cos(pushAngle) * offspring.size * 2
+	offspring.y = offspring.y + math.sin(pushAngle) * offspring.size * 2
+
+	return offspring
 end
 
 function Square:update(dt)
@@ -62,15 +92,39 @@ function Square:update(dt)
 			resource.alive = false
 		end
 	end
+
+	-- After resource consumption, try to reproduce
+	if self.energy >= self.reproductionEnergyThreshold then
+		local offspring = self:reproduce()
+		if offspring then
+			-- Need to add the offspring to the game's entities
+			-- We'll use a static reference to the game for now
+			local game = require("main")
+			table.insert(game.entities, offspring)
+		end
+	end
 end
 
+-- Draw function gets a small update to show energy level
 function Square:draw()
 	if not self.alive then
 		return
 	end
 
-	love.graphics.setColor(0, 1, 0) -- Green squares
+	-- Draw the square
+	love.graphics.setColor(0, 1, 0)
 	love.graphics.rectangle("fill", self.x - self.size / 2, self.y - self.size / 2, self.size, self.size)
+
+	-- Draw energy indicator (optional)
+	local energyPercentage = self.energy / self.reproductionEnergyThreshold
+	love.graphics.setColor(1, 1, 1, 0.5)
+	love.graphics.rectangle(
+		"fill",
+		self.x - self.size / 2,
+		self.y - self.size / 2 - 5,
+		self.size * math.min(energyPercentage, 1),
+		3
+	)
 end
 
 return Square
