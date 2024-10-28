@@ -4,21 +4,49 @@ local Square = setmetatable({}, { __index = Entity })
 Square.__index = Square
 
 function Square.new(x, y)
-	local self = Entity.init(x, y, 15, 40) -- Squares are bit bigger and slower
+	local self = Entity.init(x, y, 15, 40)
+
+	-- Add movement properties
+	self.direction = love.math.random() * math.pi * 2 -- Random initial direction
+	self.directionTimer = 0
+	self.directionChangeTime = 2 -- Change direction every 2 seconds
+	self.turnSpeed = math.pi * 2 -- How fast it can turn (full rotation per second)
+
 	return setmetatable(self, Square)
 end
 
 function Square:update(dt)
-	self:baseUpdate(dt) -- Call parent update with new name
+	self:baseUpdate(dt)
 
-	-- Simple random movement for now
-	local angle = love.math.random() * math.pi * 2
-	self.x = self.x + math.cos(angle) * self.speed * dt
-	self.y = self.y + math.sin(angle) * self.speed * dt
+	-- Update direction
+	self.directionTimer = self.directionTimer + dt
+	if self.directionTimer >= self.directionChangeTime then
+		self.directionTimer = 0
+		-- Pick new target direction
+		self.direction = love.math.random() * math.pi * 2
+	end
 
-	-- Keep within bounds
-	self.x = math.max(0, math.min(self.x, love.graphics.getWidth()))
-	self.y = math.max(0, math.min(self.y, love.graphics.getHeight()))
+	-- Move in current direction
+	self.x = self.x + math.cos(self.direction) * self.speed * dt
+	self.y = self.y + math.sin(self.direction) * self.speed * dt
+
+	-- Bounce off walls
+	local margin = 10
+	if self.x < margin then
+		self.x = margin
+		self.direction = math.pi - self.direction
+	elseif self.x > love.graphics.getWidth() - margin then
+		self.x = love.graphics.getWidth() - margin
+		self.direction = math.pi - self.direction
+	end
+
+	if self.y < margin then
+		self.y = margin
+		self.direction = -self.direction
+	elseif self.y > love.graphics.getHeight() - margin then
+		self.y = love.graphics.getHeight() - margin
+		self.direction = -self.direction
+	end
 
 	-- Check for nearby resources
 	local resourceManager = require("src.systems.resource_manager")
