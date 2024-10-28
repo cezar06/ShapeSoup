@@ -1,5 +1,5 @@
 local Square = require("src.entities.square")
-
+local ResourceManager = require("src.systems.resource_manager")
 local Game = {
 	-- Will hold our game state
 	entities = {},
@@ -17,12 +17,14 @@ function love.update(dt)
 		return
 	end
 
+	-- Update resource system
+	ResourceManager:update(dt)
+
 	-- Update all entities
 	for i = #Game.entities, 1, -1 do
 		local entity = Game.entities[i]
 		entity:update(dt)
 
-		-- Remove dead entities
 		if not entity.alive then
 			table.remove(Game.entities, i)
 		end
@@ -30,14 +32,18 @@ function love.update(dt)
 end
 
 function love.draw()
+	-- Draw resources
+	ResourceManager:draw()
+
 	-- Draw all entities
 	for _, entity in ipairs(Game.entities) do
 		entity:draw()
 	end
 
-	-- Draw entity count
+	-- Draw UI
 	love.graphics.setColor(1, 1, 1)
-	love.graphics.print("Entities: " .. #Game.entities, 10, 10)
+	love.graphics.print("Squares: " .. #Game.entities, 10, 10)
+	love.graphics.print("Resources: " .. #ResourceManager.resources, 10, 30)
 end
 
 function love.keypressed(key)

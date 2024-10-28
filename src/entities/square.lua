@@ -19,6 +19,21 @@ function Square:update(dt)
 	-- Keep within bounds
 	self.x = math.max(0, math.min(self.x, love.graphics.getWidth()))
 	self.y = math.max(0, math.min(self.y, love.graphics.getHeight()))
+
+	-- Check for nearby resources
+	local resourceManager = require("src.systems.resource_manager")
+	for i = #resourceManager.resources, 1, -1 do
+		local resource = resourceManager.resources[i]
+		local dx = self.x - resource.x
+		local dy = self.y - resource.y
+		local distance = math.sqrt(dx * dx + dy * dy)
+
+		if distance < self.size + resource.size then
+			-- Consume the resource
+			self.energy = self.energy + resource.energy
+			resource.alive = false
+		end
+	end
 end
 
 function Square:draw()
