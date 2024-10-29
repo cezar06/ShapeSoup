@@ -3,7 +3,7 @@ local Resource = require("src.entities.resource")
 local ResourceManager = {
 	resources = {},
 	spawnTimer = 0,
-	spawnRate = 1, -- Spawn new resource every second
+	spawnRate = 0.7, -- Spawn new resource every second
 	maxResources = 50,
 }
 
