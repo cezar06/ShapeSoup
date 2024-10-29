@@ -4,7 +4,7 @@ local Square = setmetatable({}, { __index = Entity })
 Square.__index = Square
 
 function Square.new(x, y)
-	local self = Entity.init(x, y, 15, 40)
+	local self = Entity.init(x, y, 15, 100)
 
 	-- Add movement properties
 	self.direction = love.math.random() * math.pi * 2 -- Random initial direction
@@ -16,6 +16,15 @@ function Square.new(x, y)
 	self.reproductionEnergyCost = 50
 	self.reproductionEnergyThreshold = 150 -- Only reproduce when energy > this
 	self.mutationRange = 0.1 -- 10% variation in offspring properties
+
+	-- New tracking properties
+	self.generation = 1
+	self.birthTime = love.timer.getTime()
+	self.resourcesEaten = 0
+	self.children = 0
+	self.id = tostring(love.math.random(1000000)) -- Unique ID
+	self.parentId = nil
+	self.selected = false -- For highlighting selected squares
 
 	return setmetatable(self, Square)
 end
@@ -41,6 +50,11 @@ function Square:reproduce()
 	local pushAngle = love.math.random() * math.pi * 2
 	offspring.x = offspring.x + math.cos(pushAngle) * offspring.size * 2
 	offspring.y = offspring.y + math.sin(pushAngle) * offspring.size * 2
+
+	-- Add genealogy tracking
+	offspring.generation = self.generation + 1
+	offspring.parentId = self.id
+	self.children = self.children + 1
 
 	return offspring
 end
@@ -87,8 +101,8 @@ function Square:update(dt)
 		local distance = math.sqrt(dx * dx + dy * dy)
 
 		if distance < self.size + resource.size then
-			-- Consume the resource
 			self.energy = self.energy + resource.energy
+			self.resourcesEaten = self.resourcesEaten + 1
 			resource.alive = false
 		end
 	end
@@ -109,6 +123,18 @@ end
 function Square:draw()
 	if not self.alive then
 		return
+	end
+
+	-- Draw selection highlight if selected
+	if self.selected then
+		love.graphics.setColor(1, 1, 1, 0.3)
+		love.graphics.rectangle(
+			"fill",
+			self.x - self.size / 2 - 5,
+			self.y - self.size / 2 - 5,
+			self.size + 10,
+			self.size + 10
+		)
 	end
 
 	-- Draw the square
