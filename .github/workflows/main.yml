@@ -42,6 +42,4 @@ jobs:
           unzip butler.zip
           chmod +x butler
           ./butler push ${{ env.GAME_NAME }}.love audition0/ShapeSoup:love
-          ./butler push web-build audition0/ShapeSoup:web
-          # You might want to tag the version:
           ./butler push web-build audition0/ShapeSoup:web --userversion ${{ env.GAME_VERSION }}
