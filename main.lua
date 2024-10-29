@@ -1,4 +1,5 @@
 local Square = require("src.entities.square")
+local Triangle = require("src.entities.triangle")
 local ResourceManager = require("src.systems.resource_manager")
 local Inspector = require("src.systems.inspector")
 local Game = {
@@ -43,8 +44,18 @@ function love.draw()
 
 	-- Draw UI
 	love.graphics.setColor(1, 1, 1)
-	love.graphics.print("Squares: " .. #Game.entities, 10, 10)
-	love.graphics.print("Resources: " .. #ResourceManager.resources, 10, 30)
+	local squareCount = 0
+	local triangleCount = 0
+	for _, entity in ipairs(Game.entities) do
+		if entity.shape == "square" then
+			squareCount = squareCount + 1
+		elseif entity.shape == "triangle" then
+			triangleCount = triangleCount + 1
+		end
+	end
+	love.graphics.print("Squares: " .. squareCount, 10, 10)
+	love.graphics.print("Triangles: " .. triangleCount, 10, 30)
+	love.graphics.print("Resources: " .. #ResourceManager.resources, 10, 50)
 
 	-- Draw inspector
 	Inspector:draw()
@@ -60,9 +71,11 @@ function love.keypressed(key)
 end
 
 function love.mousepressed(x, y, button)
-	if button == 1 then
+	if love.keyboard.isDown("lshift") and button == 1 then -- Shift + Left click for triangles
+		table.insert(Game.entities, Triangle.new(x, y))
+	elseif button == 1 then -- Left click for squares
 		table.insert(Game.entities, Square.new(x, y))
-	elseif button == 2 then -- Right click
+	elseif button == 2 then -- Right click for inspector
 		-- Find closest entity within range
 		local closest = nil
 		local minDist = 20 -- Maximum selection distance

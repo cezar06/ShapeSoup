@@ -5,6 +5,7 @@ Square.__index = Square
 
 function Square.new(x, y)
 	local self = Entity.init(x, y, 15, 80)
+	self.shape = "square"
 
 	-- Add movement properties
 	self.direction = love.math.random() * math.pi * 2 -- Random initial direction
@@ -73,6 +74,7 @@ function Square:normalizeAngle(angle)
 	end
 	return angle
 end
+
 
 function Square:reproduce()
 	if self.energy < self.reproductionEnergyThreshold then
