@@ -1,0 +1,47 @@
+name: Build and Deploy Game
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      GAME_NAME: ShapeSoup
+      GAME_VERSION: 1.0.${{ github.run_number }} # This will increment automatically with each workflow run
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      # Create .love file
+      - name: Create .love file
+        run: |
+          zip -9 -r ${{ env.GAME_NAME }}.love * -x "*.git*" "*.github*"
+
+      # Set up Node.js (needed for love.js)
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      # Install love.js
+      - name: Install love.js
+        run: npm install love.js
+
+      # Convert to web version
+      - name: Build web version
+        run: |
+          npx love.js -c -t ${{ env.GAME_NAME }} -v ${{ env.GAME_VERSION }} ${{ env.GAME_NAME }}.love web-build
+
+      # Deploy to itch.io (if you want to include this part)
+      - name: Deploy to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          ./butler push ${{ env.GAME_NAME }}.love audition0/ShapeSoup:love
+          ./butler push web-build audition0/ShapeSoup:web
+          # You might want to tag the version:
+          ./butler push web-build audition0/ShapeSoup:web --userversion ${{ env.GAME_VERSION }}
